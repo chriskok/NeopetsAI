@@ -3,6 +3,7 @@ import numpy as np
 import cv2
 import time 
 from ahk import AHK
+import threading 
 
 ahk = AHK(executable_path='C:\\Program Files\\AutoHotkey\\AutoHotkey.exe')
 
@@ -11,19 +12,20 @@ ahk = AHK(executable_path='C:\\Program Files\\AutoHotkey\\AutoHotkey.exe')
 X_START = 410
 Y_START = 350
 X_STOP = 1110
-Y_STOP = 475
+Y_STOP = 500
 
 FOUND = []
 counter = 0
-COUNTER_THRESH = 5
-USE_FOUND = True
+COUNTER_THRESH = 10
+USE_FOUND = False
+ANALYSIS = []
 
-RED_MIN = np.array([0, 0, 190], np.uint8)
+RED_MIN = np.array([0, 0, 155], np.uint8)
 RED_MAX = np.array([100, 100, 255], np.uint8)
 RAC_MIN = np.array([35, 75, 110], np.uint8)
 RAC_MAX = np.array([65, 105, 150], np.uint8)
-GH_MIN = np.array([0, 100, 85], np.uint8)
-GH_MAX = np.array([10, 150, 120], np.uint8)
+GH_MIN = np.array([0, 100, 50], np.uint8)
+GH_MAX = np.array([50, 200, 150], np.uint8)
 
 def presskey(index):
     if (index == 0):
@@ -40,10 +42,12 @@ def presskey(index):
         ahk.key_press('l')
 
 def checkForBaddies(i, partOfImg):
+    ANALYSIS.append(i)
+
     # Check for snek
     dst = cv2.inRange(partOfImg, RED_MIN, RED_MAX)
     no_red = cv2.countNonZero(dst)
-    if (no_red > 600):
+    if (no_red > 1000):
         print("snek found at {}, red: {}, count: {}".format(i, no_red, counter))
         if (USE_FOUND): FOUND.append(i)
         presskey(i)
@@ -59,10 +63,12 @@ def checkForBaddies(i, partOfImg):
     # Check for greenhorn
     dst = cv2.inRange(partOfImg, GH_MIN, GH_MAX)
     no_gh = cv2.countNonZero(dst)
-    if (no_gh > 300):
+    if (no_gh > 1700):
         print("greenhorn found at {}, green: {}, count: {}".format(i, no_gh, counter))
         if (USE_FOUND): FOUND.append(i)
         presskey(i)
+
+    ANALYSIS.remove(i)
 
 
 def main():
@@ -78,13 +84,14 @@ def main():
             FOUND.clear()
 
         for i in range(6):
-            if (i in FOUND): continue
+            if (i in ANALYSIS): continue
 
             # crop the image to one of each door
-            crop_img = img[0:(Y_STOP-Y_START), (i*120) + 30:((i+1)*120) - 30]
+            crop_img = img[0:150, (i*120) + 20:((i+1)*120) - 20]
             
             img2 = cv2.cvtColor(crop_img, cv2.COLOR_BGR2RGB)
             # cv2.imwrite('imgs/{}.png'.format(i),img2)
 
-            checkForBaddies(i, img2)
+            threading.Thread(target=checkForBaddies, args=(i,img2,)).start()
+            # checkForBaddies(i, img2)
 main()
