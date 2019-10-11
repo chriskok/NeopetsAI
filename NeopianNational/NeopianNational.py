@@ -78,6 +78,8 @@ def main():
         # Save part of the screen where game is
         im=ImageGrab.grab(bbox=(X_START,Y_START,X_STOP,Y_STOP))
         img = np.array(im)
+        # saveImg = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        # cv2.imwrite('imgs/NN/save.png',saveImg)
         counter += 1
 
         if (USE_FOUND and counter % COUNTER_THRESH == 0):
@@ -90,7 +92,7 @@ def main():
             crop_img = img[0:150, (i*120) + 20:((i+1)*120) - 20]
             
             img2 = cv2.cvtColor(crop_img, cv2.COLOR_BGR2RGB)
-            # cv2.imwrite('imgs/{}.png'.format(i),img2)
+            # cv2.imwrite('imgs/NN/{}.png'.format(i),img2)
 
             threading.Thread(target=checkForBaddies, args=(i,img2,)).start()
             # checkForBaddies(i, img2)
